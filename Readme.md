@@ -1,72 +1,72 @@
-## Instrukcja obsługi narzędzi do skanowania obiektów przy użyciu kilku Lidarów L515
+## User manual for tools for scanning objects with several L515 Lidars
 
-Programy umożliwią skanowanie obiektów lub odczyt wcześniej zeskanowanych plików.
+The programs will allow you to scan objects or read previously scanned files.
 
-W celu włączenia skanowania używamy opcji: --lidar
+In order to enable scanning, we use the: --lidar option
 
-W celu wczytania wcześniej zeskanowanych plików używamy opcji: --input_folder=<katalog gdzie znajdują się pliki z rozszerzeniem ply>. Np. --input_folder="Kasia/1"
+To load previously scanned files, use the option: --input_folder = <directory where files with ply extension are located>. For example --input_folder = "Kasia/1"
 
-Skanowanie obiektów odbywa się zgodnie z opisem https://dev.intelrealsense.com/docs/lidar-camera-l515-multi-camera-setup. Sterowanie poszczególnymi kamerami odbywa się za pomocą układu FT232H podłączonego do tej samej stacji co L515.
+Objects are scanned as described https://dev.intelrealsense.com/docs/lidar-camera-l515-multi-camera-setup. Individual cameras are controlled by means of the FT232H system connected to the same station as the L515.
 
-Dostępne są dwa narzędzia:
-1. Główne narzędzie skanujące - main.py
-2. Narzędzie pomocnicze do automatycznego wyliczenia izomorficznych transformacji przestrzennych poszczególnych point cloud względem układu współrzędnych kamery - auto_transform_calculator.py
+Two tools are available:
+1. Main scanning tool - main.py
+2. Auxiliary tool for automatic calculation of isomorphic spatial transformations of individual point clouds in relation to the camera coordinate system - auto_transform_calculator.py
 
-###### Podłączenie lidarów z portami GPIO FT232H
-Konfiguracja FT232H: https://learn.adafruit.com/circuitpython-on-any-computer-with-ft232h/linux
+###### Connecting lidars with GPIO FT232H ports
+FT232H configuration: https://learn.adafruit.com/circuitpython-on-any-computer-with-ft232h/linux
 
-Oba narzędzia wymagają wprowadzenia jako zmiennej środowiskowej wartości: BLINKA_FT232H=1
-W pliku `scene_reader.py` znajduje się definicja dictionary skałdająca się z trzech ostatnich cyfr numeru seryjnego L515 oraz powiązanego z nim porty GPIO:
+Both tools require the environment variable to be entered as: BLINKA_FT232H = 1
+In the `scene_reader.py` file there is a dictionary definition consisting of the last three digits of the L515 serial number and the associated GPIO ports:
 
-`        self.gpio_config = {
-            '303': board.C1,
-            '608': board.C3,
-            '337': board.C2,
-            '630': board.C0
-        }`
+`self.gpio_config = {
+             '303': board.C1,
+             '608': board.C3,
+             '337': board.C2,
+             '630': board.C0
+         } `
 
-  W pyrzpadku innego podłączenia należy zmienić powyższą konfigurację.
+   In case of a different connection, change the above configuration.
 
 
-### Narzędzie do automatycznego wyliczania transformacji
+### Tool for automatic calculation of transformations
 
-1. Uruchomienie narzędzia: `python3 auto_transform_calculator.py`
-2. Narzędzie automatycznie wykrywa ilość podłączonych lidarów.
-3. Po odczytaniu danych z lidarów okna otwierają się parami: SOURCE, TARGET. Narzędzie będzie szukać transformacji SOURCE, żeby pasował do TARGET. Pierwszy podłączony lidar staję się pierwszym TARGET.
-4. Na point cloud TARGET i SOURCE zaznaczamy punkty korespondencyjne. Minimum 3. Zaznaczenie/odznaczenie wykonujemy poprzez SHIFT + lewy/prawy przycisk myszy.
-5. Jeżeli jesteśmy pewni zaznaczenia to zamykamy okna klawiszem `q`.
-6. Pojawia sie okno poglądowe jak wygląda SOURCE w stosunku do TARGET po dokonaniu transformacji. Zamykamy okno przez `q`.
-7. Jeżeli jest więcej lidarów, to pojawi się kolejna para okien TARGET i SOURCE, ale tym razem TARGET będzie zawierał dwa poprzednie point cloud po dokonaniu ostatniej transformacji.
-8. Procedurę kontynuujemy do momentu przetworzenia wszystkich point cloud z wszystkich lidarów.
-9. Jako wynik program generuje plik o nazwie `auto_transform_matrices.npy`, który jest automatycznie wczytywany przez główne narzędzie do skanowania.
+1. Running the tool: `python3 auto_transform_calculator.py`
+2. The tool automatically detects the number of connected lidars.
+3. After reading the data from the lidars, the windows open in pairs: SOURCE, TARGET. The tool will look for a SOURCE transformation to match TARGET. The first connected lidar becomes the first TARGET.
+4. Mark correspondence points at point cloud TARGET and SOURCE. Minimum 3. Selection / deselection is performed by SHIFT + left / right mouse button.
+5. If we are sure about the selection, we close the windows with the `q` key.
+6. A preview window appears on what SOURCE looks like in relation to TARGET after the transformation. We close the window with `q`.
+7. If there are more lidars, another pair of TARGET and SOURCE windows will appear, but this time TARGET will contain the previous two point clouds after the last transformation.
+8. We continue the procedure until all point clouds from all lidars are processed.
+9. As a result, the program generates a file named `auto_transform_matrices.npy`, which is automatically loaded by the main scanning utility.
 
-### Narzędzie do automatycznego wyliczania transformacji
+### Tool for automatic calculation of transformations
 
-1. Uruchomienie narzędzia: `python3 main.py`
-2. Narzędzie automatycznie wczytuje plik `auto_transform_matrices.npy`, który pozwala na wstępne przekształcenie danych z poszczególnych lidar'ów.
-3. Następnie sekwencyjnie czytane są  poszczególne point clouds z lidar'ów.
-4. Wszystkie odczytane point clouds wyświetlane są w jednym oknie. Transformacje na poszczególnych point clouds odbywają się poprzez wskazanie, które point could są aktywne za pomocą klawiszy: `F1, F2, F3, F4`. Na początku wszystkie odczytane point clouds są aktywne. Klawisz `F12` aktywuje wszystkie point cloud.
-5. Lista transformacji aktywnych point clouds:
-    * `A <-> D` przesunięcie lewo/prawo oś X
-    * `W <-> S` przesunięcie lewo/prawo oś Y
-    * `Z <-> X` przesunięcie lewo/prawo oś Z
-    * `R <-> T` obrót lewo/prawo oś X
-    * `F <-> G` obrót lewo/prawo oś Y
-    * `V <-> B` obrót lewo/prawo oś Z
-    * `Backspace` wykonanie transformacji wstecznej
-    * `P` wyświetlenie macierzy transformacji izomorficznej
-    * `O` zapisanie macierzy transformacji izomorficznej
-    * `L` wczytanie macierzy transformacji izomorficznej
-    * `I` eksport WSZYSTKICH point ploud w jednym pliku PLY
+1. Running the tool: `python3 main.py`
+2. The tool automatically loads the `auto_transform_matrices.npy` file, which allows you to pre-transform the data from individual lidars.
+3. Then the individual point clouds from the lidars are read sequentially.
+4. All read point clouds are displayed in one window. Transformations on individual point clouds are performed by indicating which point could be active using the `F1, F2, F3, F4` keys. Initially, all read point clouds are active. The `F12` key activates all point clouds.
+5. List of active point clouds transformations:
+    * `A <-> D` shift left / right X axis
+    * `W <-> S` Offset left / right Y axis
+    * `Z <-> X` shift left / right Z axis
+    * `R <-> T` rotation left / right X axis
+    * `F <-> G` rotation left / right Y axis
+    * `V <-> B` rotation left / right Z axis
+    * `Backspace` performs a back transform
+    * `P` display isomorphic transformation matrix
+    * `O` notation of isomorphic transformation matrix
+    * `L` reads the isomorphic transformation matrix
+    * `I` export ALL point ploud in one PLY file
     * `.` voxel down sample
     * `,` radius filter
-    * `M` utworzenie mesh'a
-    * `/` zmiana wyświetlanych geometrii pount coulds / mesh
-    * `U` eksport mesh'a do pliku OBJ
-    * `E` reset pozycji kamery
-    * `C` estymacja normals dla aktywncyh point clouds. UWAGA: pozycja kamery ma wpły w którą stronę będa skierowane wektory normals. Kierunek wektorów ma wpływ na proces tworzenia mesh'a.
-6. Zamknięcie okna i zakończenie programu `q`.
-7. Lista pozostałych domyślnych poleceń `h` 
+    * `M` creating a mesh
+    * `/` change display geometry pount coulds / mesh
+    * `U` ​​export the mesh to an OBJ file
+    * `E` reset camera position
+    * `C` normals estimate for active point clouds. NOTE: the position of the camera affects which way the normals vectors will be pointed. The direction of the vectors affects the meshing process.
+6. Close the window and exit the `q` program.
+7. List of other default `h` commands
 
     * [Open3D INFO]   -- Mouse view control --
     * [Open3D INFO]     Left button + drag         : Rotate.
