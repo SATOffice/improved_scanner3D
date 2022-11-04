@@ -1,0 +1,10 @@
+pip3 install --upgrade pip
+pip3 install pyftdi
+pip3 install Adafruit-Blinka
+pip3 install numpy
+pip3 install argparse
+pip3 install pyrealsense2
+pip3 install ../../tools/Open3D/build/lib/python_package/pip_package/open3d-0.12.0+16274c1d1-cp38-cp38-manylinux_2_31_x86_64.whl
+
+numpy~=1.21.2
+open3d~=0.13.0+febe42608
